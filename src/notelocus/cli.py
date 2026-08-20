@@ -68,6 +68,11 @@ def build_parser() -> argparse.ArgumentParser:
     find.add_argument(
         "--max-depth", type=int, default=None, help="how many folders deep to descend"
     )
+    find.add_argument(
+        "--speaker",
+        help="only ideas attributed to this speaker, e.g. `you` for your own words "
+        "rather than a model's answer",
+    )
 
     return parser
 
@@ -82,7 +87,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "index":
         return _index(notes_dir, args.out, args.threshold, args.segments, args.max_depth)
-    return _find(notes_dir, args.query, args.limit, args.max_depth)
+    return _find(notes_dir, args.query, args.limit, args.max_depth, args.speaker)
 
 
 def _index(
@@ -145,7 +150,13 @@ def _summary(notes: list[Note], entries: dict, duplicates: list, out: Path, root
     return "\n".join(lines)
 
 
-def _find(notes_dir: Path, query: list[str], limit: int, max_depth: int | None = None) -> int:
+def _find(
+    notes_dir: Path,
+    query: list[str],
+    limit: int,
+    max_depth: int | None = None,
+    speaker: str | None = None,
+) -> int:
     """Substring search over normalised text.
 
     Deliberately not clever. It is here so that the index is not the only way to
@@ -159,7 +170,12 @@ def _find(notes_dir: Path, query: list[str], limit: int, max_depth: int | None =
 
     notes = read_corpus(notes_dir, max_depth=max_depth)
     hits = 0
+    wanted = speaker.lower() if speaker else None
     for entry in entries_of(notes):
+        # In a vault of pasted conversations the useful question is usually
+        # "what did *I* think", not "what did the model say".
+        if wanted and entry.segment.speaker != wanted:
+            continue
         haystack = normalise(entry.text)
         if all(term in haystack for term in terms):
             hits += 1
