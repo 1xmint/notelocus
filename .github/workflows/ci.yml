@@ -61,38 +61,56 @@ jobs:
       - run: python -m pip install --upgrade pip ruff
       - run: python -m ruff format --check .
 
-  # Path-filtered, so it skips on any pull request that does not touch the
-  # fixtures. That is the point: a skipped check is a conclusion GitLocus's
-  # evidence collector handles in code and has never once seen in the wild,
-  # because nothing in that repository is ever skipped.
-  fixtures:
-    name: fixtures
+  # Which parts of the tree this pull request touches. The `fixtures` job below
+  # is gated on it, which is the ordinary way a repository avoids running an
+  # expensive check it does not need.
+  changes:
+    name: changes
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    timeout-minutes: 5
+    outputs:
+      fixtures: ${{ steps.detect.outputs.fixtures }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Only when the fixtures change
-        id: changed
+      - id: detect
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -q '^tests/fixtures/'; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "fixtures unchanged"
+          if [ -z "${BASE_SHA:-}" ]; then
+            echo "fixtures=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-      - if: steps.changed.outputs.run == 'true'
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -q '^tests/fixtures/'; then
+            echo "fixtures=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fixtures=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Gated at the *job* level, which is what produces a check run whose conclusion
+  # is `skipped` rather than one that runs and succeeds with nothing in it.
+  #
+  # A workflow-level `paths:` filter was tried first and produces no check run at
+  # all - the check is simply absent, which an evidence collector sees as missing
+  # rather than skipped. Two different things, and only one of them is what
+  # GitLocus's `skipped` handling was written for.
+  fixtures:
+    name: fixtures
+    needs: changes
+    if: needs.changes.outputs.fixtures == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
-      - if: steps.changed.outputs.run == 'true'
-        run: |
+      - run: |
           python -m pip install --upgrade pip pytest
-          python -m pytest tests -k fixture
+          python -m pytest
