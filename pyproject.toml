@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "notelocus"
+version = "0.1.0"
+description = "Converge scattered notes into the ideas they are about."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+keywords = ["notes", "markdown", "deduplication", "knowledge", "agents"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Topic :: Text Processing :: Indexing",
+]
+# No runtime dependencies, on purpose. This reads files from a personal machine;
+# every dependency is something else that gets to see those files.
+dependencies = []
+
+[project.scripts]
+notelocus = "notelocus.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.14"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/notelocus"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "PTH", "C4", "RET"]
+
+[tool.ruff.lint.per-file-ignores]
+# RUF001 flags characters that look like ASCII but are not. That is exactly what
+# these files contain on purpose: the tests assert that NFKC folding turns
+# full-width text into its ASCII form, and they cannot do that without a
+# full-width character in the source. Suppressed here rather than globally, so
+# an accidental one anywhere else still fails.
+"tests/test_identity.py" = ["RUF001"]
+"tests/test_nothing_is_lost.py" = ["RUF001"]
+# The speaker pattern accepts a full-width colon, which is what a transcript
+# pasted from a CJK locale actually contains.
+"src/notelocus/segment.py" = ["RUF001"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+pythonpath = ["src"]

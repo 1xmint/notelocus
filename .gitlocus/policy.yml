@@ -1,0 +1,31 @@
+# What a change to notelocus must carry.
+#
+# Written as an adopter would write it, not copied from GitLocus's own policy:
+# four checks, no signing, no tiers. If a real policy written by a normal person
+# cannot express something useful, that is worth knowing.
+
+version: 0
+
+rules:
+  - name: baseline
+    when:
+      paths: ["**"]
+    require:
+      deterministic: [tests, lint, format]
+      # An approval is required and, in a repository with one maintainer,
+      # nothing can currently satisfy it. That is deliberate: it makes every
+      # verdict here `needs_human`, which is the honest state of a solo project
+      # and is exactly what the gate should say about it.
+      approvals: 1
+
+  # The tool reads a folder somebody cares about and promises never to move or
+  # delete anything. That promise lives in these two files, so a change to them
+  # is the change most worth looking at twice.
+  - name: the-promise
+    when:
+      paths:
+        - "src/notelocus/corpus.py"
+        - "src/notelocus/cli.py"
+    require:
+      deterministic: [tests, lint, format]
+      approvals: 1

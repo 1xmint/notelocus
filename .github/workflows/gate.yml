@@ -1,0 +1,41 @@
+# GitLocus, in observation mode.
+#
+# The job is named `notes-gate` on purpose. That is what an adopter would
+# naturally call it, and it is *not* what `hey-vera/gitlocus`'s own default
+# `exclude` regex matches — `^(gitlocus|gate|arm|Scorecard|analyze)`, which is a
+# list of that repository's own job names.
+#
+# The action's own documentation says the regex must match the job running it,
+# because that job is a check run too and is still in progress while it
+# collects. If the default does not match, this job waits for itself. Finding
+# that out is the reason this repository exists in its current form, so the
+# default is left alone rather than quietly worked around.
+name: gate
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  notes-gate:
+    name: notes-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      checks: read
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: hey-vera/gitlocus@v0.0.4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Report a verdict; do not gate anything on it yet. The README calls
+          # this the honest way to adopt: find out what the repository already
+          # satisfies before letting a verdict block a merge.
+          fail-on-blocked: false
