@@ -110,3 +110,10 @@ def test_the_fragment_threshold_is_what_the_merger_actually_uses():
     long = "y" * (MIN_SEGMENT_CHARS + 50)
     assert len(split(f"{long}\n\n{short}")) == 1
     assert len(split(f"{long}\n\n{long}")) == 2
+
+
+def test_a_segment_knows_which_speaker_it_belongs_to():
+    """The filter `--speaker you` depends on this, and it is the difference
+    between your own thinking and a model's answer in a pasted transcript."""
+    segments = split("You:\nmy own reasoning\n\nAssistant:\nthe reply\n")
+    assert [s.speaker for s in segments] == ["you", "assistant"]
