@@ -1,9 +1,11 @@
 """Reading a folder of notes into an addressable corpus.
 
-Reading only. Nothing in this module writes, moves or deletes anything — the
-whole of v0.1 is non-destructive by construction rather than by care, so there
-is no `--apply` to forget and no way to lose a note by running the wrong
-command.
+Reading only, and recursive - this is what `index` and `find` walk with.
+
+`tidy` deliberately does **not** use this. It has its own walker in `tidy.py`
+that cannot descend at all, because sharing one traversal between a command that
+reads and a command that moves files is how a scope bug becomes a data-loss bug.
+Nothing in this module writes anything.
 """
 
 from __future__ import annotations

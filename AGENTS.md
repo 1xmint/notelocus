@@ -10,6 +10,17 @@ A tool that reads a folder of notes and finds the ideas in them. It also serves
 as the first adoption of [GitLocus](https://github.com/hey-vera/gitlocus) by a
 repository other than GitLocus itself — see "The experiment" below.
 
+## The commands
+
+```
+notelocus tidy            file loose desktop notes into Desktop/Notes/<topic>/
+notelocus tidy --dry-run  say what would move, change nothing
+notelocus undo            put the last tidy back
+notelocus shortcut        write a one-click launcher to the desktop
+notelocus index <dir> --out <dir>   build a segment-level corpus for a model
+notelocus find <dir> <query>        search without writing anything
+```
+
 ## Build and test
 
 ```bash
@@ -24,13 +35,28 @@ are what `.gitlocus/policy.yml` requires.
 
 ## The rule that is not negotiable
 
-**Nothing may move, rename or delete a note.**
+**Nothing may delete a note, and nothing may overwrite one.**
 
-v0.1 holds this by construction rather than by care: no code path writes outside
-`--out`. If a future version gains the ability to move files, it arrives with a
-dry run by default and a manifest mapping every destination back to its source —
-and this section gets rewritten to say what actually protects the promise then,
-rather than left to imply something it no longer does.
+This used to read "nothing may move, rename or delete", held by construction
+because no code path wrote outside `--out`. `tidy` moves files, which is the
+point of it, so that guarantee is gone and this section says what replaced it
+rather than being left to imply something it no longer means.
+
+What protects a note now is built rather than absent:
+
+- **`src/notelocus/manifest.py`** — every run records each source and
+  destination, timestamped so a second run cannot destroy the record that would
+  undo the first.
+- **`notelocus undo`** — reads it back. It refuses to overwrite anything that
+  has appeared at the original path since, and reports what it could not
+  restore rather than guessing.
+- **`_free_name` in `tidy.py`** — an identical note already filed is left alone;
+  a different note with the same name gets a suffix. Neither is overwritten.
+- **Scope is a code path, not a flag.** `tidy` reads one directory and cannot
+  descend into any of them; there is no depth parameter to pass wrong.
+  `corpus.py` keeps the recursive walker for `index` and `find`, which only
+  read. Sharing one walker between a read command and a move command is how a
+  scope bug becomes a data-loss bug.
 
 `tests/test_nothing_is_lost.py` is the enforcement. It generates documents that
 look like real pasted notes and asserts that splitting one never loses a word.

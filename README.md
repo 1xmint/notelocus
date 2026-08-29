@@ -8,31 +8,42 @@ a desktop is rarely one idea — it is a conversation, a paste, a jotted line, a
 model's long answer. notelocus finds the ideas inside those files, gives each one
 a stable address, and tells you which ones you have written down more than once.
 
+Dump `.txt` files on your desktop. Run one command. The desktop is clean and the
+notes are filed by what they are about.
+
 ```bash
-notelocus index ~/Desktop --max-depth 2 --out ~/notes-corpus
+notelocus tidy
 ```
 
 ```
-read    143 files under C:\Users\Josh\Desktop
-ideas   1798 distinct
-exact   142 appear in more than one file
-near    5 pairs above the threshold
-wrote   C:\Users\Josh\notes-corpus
+cortex/
+    CORTEX.txt
+    cortex foundation.txt
+vera/
+    HEY-VERA-ORG-PLAN.md
+    VERA AND WORLD CURRENCY.txt
+    vera.txt
+unsorted/
+    hoisin sauce.txt
 
-Nothing was moved, renamed or deleted.
+moved 34 notes into 9 folders under C:\Users\Josh\Desktop\Notes
+
+Nothing was deleted. `notelocus undo` puts it all back.
 ```
 
-## It does not touch your notes
+`notelocus shortcut` puts a **Tidy Notes.cmd** on the desktop, so after that it
+is one double-click.
 
-v0.1 reads. There is no code path that writes outside `--out`, so there is no
-`--apply` to get wrong at two in the morning and no flag that turns this into
-something destructive. Moving and archiving are a later version, and they will
-arrive with an audit trail.
+## What it will and will not touch
 
-Repositories under the folder are skipped — a README inside a checked-out project
-belongs to that project, not to your notes. Pointing an early version at a
-Desktop that also held source checkouts found 8,703 files where the notes
-numbered about fifty.
+**Only note files sitting loose at the top level of the desktop.** Not folders,
+not repositories, not anything inside them. That is a separate code path with no
+recursion in it rather than a default somebody can raise — an earlier version
+walked the whole tree and found 8,703 files where the notes numbered about fifty.
+
+**Nothing is ever deleted or overwritten.** Files are moved. Every run records
+what it did, `notelocus undo` reads that back, and an identical note already
+filed is left where it is rather than copied again.
 
 ## What it gives a model
 
@@ -65,10 +76,28 @@ similarity computed either way; what changes is whether every pair was
 but no answer at all — the first real run had 755 million pairs to compare and
 never finished.
 
+## Grouping
+
+Notes are grouped by **distinctive vocabulary** — the words common inside a note
+and rare across the pile, which is TF-IDF — compared by cosine over the weights.
+Filenames count too, and match by containment above four characters, so `vera`,
+`verayes` and `HEYVERA-VISION` meet, and `grok` meets `grokyoo`. A folder is
+named for the shortest stem its members share, which is almost always the word
+you would have picked.
+
+Deterministic: same desktop, same folders, every run. A second run reads the
+folders the first one made and puts new notes into them rather than inventing
+near-duplicates beside them. Anything resembling nothing else goes to
+`unsorted/` rather than getting a folder of its own.
+
+A model-assisted layer that proposes better groupings is a later addition. The
+offline grouping stays the default, because it is free, instant and repeatable.
+
 ## Install
 
 ```bash
 pip install -e .
+notelocus shortcut
 ```
 
 ## This repository is also an experiment
