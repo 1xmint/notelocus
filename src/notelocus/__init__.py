@@ -4,7 +4,11 @@
 a desktop is rarely one idea; it is a conversation, a paste, a jotted line. This
 finds the ideas and gives each one a stable address.
 
-v0.1 reads. It does not move, rename or delete anything.
+`tidy` files loose desktop notes into topic folders. It moves them and nothing
+else: it never deletes and never overwrites, every run records what it did, and
+`undo` reads that back.
+
+`index` and `find` only read, and never write outside the folder they are given.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
