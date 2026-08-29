@@ -57,11 +57,19 @@ PROFILE_TERMS = 60
 #: once stopwords are gone.
 MIN_TERM_CHARS = 3
 
-#: Above this combined score, two notes are the same topic. Tuned against a real
-#: desktop of 47 notes by sweeping it and reading the output: at 0.10 the vera
-#: group chains in three unrelated files, and at 0.26 almost everything is a
-#: folder of one. 0.14 groups what a person would group and stops there.
-GROUP_THRESHOLD = 0.14
+#: Above this combined score, two notes are the same topic.
+#:
+#: Swept against a real desktop of 47 notes and chosen by reading the output
+#: rather than by optimising a number. At 0.26 almost everything is a folder of
+#: one; at 0.10 the vera group chains in three files that have nothing to do
+#: with it; 0.14 leaves 25 of 47 unsorted.
+#:
+#: 0.13 files 26 and finds a `rust` group that 0.14 misses. What it costs is
+#: real and worth stating: the two heyvera iOS notes stop being their own folder
+#: and join `vera`. That is defensible - they *are* heyvera work - but it is a
+#: judgement, not a fact, and someone who prefers the finer split should raise
+#: this rather than assume it was tuned blindly.
+GROUP_THRESHOLD = 0.13
 
 #: How much a shared filename token counts for. Filenames are a deliberate
 #: statement about what a file is, so they are weighted comparably to the whole
