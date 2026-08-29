@@ -29,6 +29,9 @@ from dataclasses import dataclass, field
 #: Words carrying no topic signal. Short rather than exhaustive: a real stopword
 #: list is a dependency, and TF-IDF already suppresses anything that appears in
 #: most documents. These are the ones that survive that and still say nothing.
+# ruff SIM905 would prefer a list literal here. Ninety words one-per-line is far
+# less readable than a block of prose that can be scanned, and the split runs
+# once at import.
 STOPWORDS = frozenset(
     """
 a about above after again against all am an and any are aren as at be because
@@ -42,7 +45,7 @@ they this those through to too under until up very was wasn we were weren what
 when where which while who whom why with won would wouldn you your yours
 yourself yourselves also like get got make made use used using one two three
 new thing things way ways lot really actually maybe okay yeah yes able
-""".split()
+""".split()  # noqa: SIM905
 )
 
 #: How many distinctive terms describe a note. Sixty rather than a couple of
@@ -194,9 +197,9 @@ def _matches_any(term: str, others: frozenset[str]) -> bool:
     for other in others:
         if term == other:
             return True
-        if len(term) >= CONTAINMENT_CHARS and len(other) >= CONTAINMENT_CHARS:
-            if term in other or other in term:
-                return True
+        long_enough = len(term) >= CONTAINMENT_CHARS and len(other) >= CONTAINMENT_CHARS
+        if long_enough and (term in other or other in term):
+            return True
     return False
 
 
